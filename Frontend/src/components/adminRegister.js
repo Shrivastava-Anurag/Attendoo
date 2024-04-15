@@ -7,6 +7,7 @@ import axios from 'axios';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from 'react-toastify';
 import { Bounce } from 'react-toastify'; // Import the Bounce transition
+import server from '../features/server';
 
 const AdminRegister = () => {
   const [selectedTeam, setSelectedTeam] = useState("");
@@ -26,7 +27,7 @@ const AdminRegister = () => {
     try {
       console.log(data)
 
-      const registeredResponse = await axios.post("http://localhost:8080/admin/register", data, {
+      const registeredResponse = await axios.post(`${server}/admin/register`, data, {
         headers: { 'Content-Type': 'application/json' },
       });
       console.log(registeredResponse)

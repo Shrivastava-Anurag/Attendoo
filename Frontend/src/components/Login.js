@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { setLogin } from '../features/userSlice';
 import axios from 'axios';
+import server from '../features/server';
 
 export default function Login() {
   const {
@@ -25,7 +26,7 @@ export default function Login() {
   const Login = async (data) => {
     try {
       if(userType === 'student') {
-        const loggedInResponse = await axios.post("/api/users/login", data, {
+        const loggedInResponse = await axios.post(`${server}/api/users/login`, data, {
           headers: { 'Content-Type': 'application/json' },
         });
         console.log(loggedInResponse.status)
@@ -43,7 +44,7 @@ export default function Login() {
         }
       }
       else {
-        const loggedInResponse = await axios.post("/admin/login", data, {
+        const loggedInResponse = await axios.post(`${server}/admin/login`, data, {
           headers: { 'Content-Type': 'application/json' },
         });
         console.log(loggedInResponse.status)
@@ -76,11 +77,12 @@ export default function Login() {
     <>
       <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-          <img
-            className="mx-auto h-10 w-auto"
-            src="/ecommerce.png"
+        <img
+            className="mx-auto h-40 -z-50 "
+            src="/Logo.png"
             alt="Your Company"
           />
+
           <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-amber-50  ">
             Log in to your account
           </h2>

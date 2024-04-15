@@ -9,6 +9,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { setTeamNames } from '../features/userSlice';
 import MessageAdmin from '../components/NotificationAdmin';
+import server from '../features/server';
 
 const navigation = [
   { name: 'Dashboard', href: '#', current: true },
@@ -25,6 +26,7 @@ export default function Dashboard() {
   const [students, setStudents] = useState();
   const [teams, setTeams] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const dispatch = useDispatch();
 
@@ -34,7 +36,7 @@ export default function Dashboard() {
 
   const handleSend = async(data) => {
     try {
-      const response = await axios.post("/admin/announcement", data, {
+      const response = await axios.post(`${server}/admin/announcement`, data, {
         headers: { 'Content-Type': 'application/json' },
       });
       console.log(response)
@@ -54,7 +56,7 @@ export default function Dashboard() {
   const fetchStudents = async() => {
     try {
       const team = selectedTeam == 'all' ? '' : selectedTeam;
-      const response = await axios.get(`/admin/users/${team}`)
+      const response = await axios.get(`${server}/admin/users/${team}`)
         return response.data.data;
     }
     catch(error){
@@ -64,7 +66,7 @@ export default function Dashboard() {
 
   const fetchTeams = async() => {
     try {
-      const response = await axios.get('/admin/teams')
+      const response = await axios.get(`${server}/admin/teams`)
         return response.data.data;
     }
     catch(error){
@@ -74,13 +76,17 @@ export default function Dashboard() {
 
   const downloadAttendance = async() => {
     try {
-      const response = await axios.get('/admin/download-attendance', {
+      const response = await axios.get(`${server}/admin/download-attendance`, {
         responseType: 'blob', // Set the responseType to 'blob' to handle binary data
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'attendance.xlsx'); // Specify the filename
+      const date = new Date();
+      const day = date.getDate();
+      const month = date.getMonth() + 1;
+      const year = date.getFullYear();
+      link.setAttribute('download', `attendance${day}${month}${year}.xlsx`); // Specify the filename
       document.body.appendChild(link);
       link.click();
     } catch (error) {
@@ -95,6 +101,7 @@ export default function Dashboard() {
       setTeams(teamData);
       dispatch(setTeamNames(teamData));
       setStudents(studentsData); // Set the state with the fetched data
+      setIsLoading(false);
     };
   
     fetchData();
@@ -129,15 +136,13 @@ if(students){
 
   return (
     <>
-      {/*
-        This example requires updating your template:
-
-        ```
-        <html class="h-full bg-gray-100">
-        <body class="h-full">
-        ```
-      */}
-      <div className="min-h-full">
+        <>
+      {isLoading ? ( // Conditional rendering based on isLoading state
+        <div className="min-h-screen flex justify-center items-center">
+          <p className="text-2xl text-amber-50 font-semibold">Loading...</p>
+        </div>
+      ) : (
+        <div className="min-h-full">
         <Disclosure as="nav" className="bg-zinc-900">
           {({ open }) => (
             <>
@@ -162,8 +167,9 @@ if(students){
                             {item.name}
                           </a>
                         ))}
-                      </div>  
+                      </div> 
                       </div>
+                      <button className="hidden md:block w-full mb-2 mt-2 bg-amber-50 rounded ml-5 p-1 hover:bg-amber-100" onClick={downloadAttendance}>Download Attendance</button>
                       </div>
 
                       <div className='hidden md:flex flex-row'>
@@ -223,6 +229,7 @@ if(students){
                   ))}
                 </div>
                   <div className='flex-flex-col pr-10'>
+                  <button className="w-full mb-2 bg-amber-50 rounded ml-5 p-1 hover:bg-amber-100" onClick={downloadAttendance}>Download Attendance</button>
                   <button className="w-full mb-2 bg-amber-50 rounded ml-5 p-1 hover:bg-amber-100" onClick={togglePopup}>Send Announcement</button>
                 <button className="w-full mb-2 bg-amber-50 rounded ml-5 p-1 hover:bg-amber-100">
                 <Link to="/register">Add Member</Link>
@@ -255,7 +262,7 @@ if(students){
             <h1 className="text-3xl font-bold tracking-tight text-gray-900">Attendance</h1>
           </div>
         </header>
-        <main className='bg-white'>
+        <main className='bg-white '>
           <div className="mx-10 ">
           {/* <DataTable
 			columns={columns}
@@ -266,7 +273,8 @@ if(students){
           </div>
         </main>
       </div>
-
+      )}
+    </>
 
     </>
   )

@@ -9,7 +9,7 @@ function DynamicTable({ data }) {
   // }, [data]);
 
   return (
-<div className="overflow-x-auto ">
+<div className="overflow-x-auto min-h-[500px]">
       <table className="min-w-full divide-y divide-gray-200 ">
         <thead className="bg-gray-50">
           <tr>

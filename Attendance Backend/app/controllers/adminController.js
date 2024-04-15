@@ -284,8 +284,8 @@ exports.getAllTeams = async (req, res) => {
           name: user.name,
           team: user.team,
           erp: user.erp,
-          branch: user.branch,
-          contact: user.contact,
+          branch: user.course,
+          contact: user.mobile,
         };
         let flag = 0;
 

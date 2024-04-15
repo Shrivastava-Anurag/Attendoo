@@ -6,6 +6,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import axios from 'axios';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from 'react-toastify';
+import server from '../features/server';
 import { Bounce } from 'react-toastify'; // Import the Bounce transition
 
 const Register = () => {
@@ -29,7 +30,7 @@ const Register = () => {
     try {
       console.log(data)
 
-      const registeredResponse = await axios.post("/api/users/register", data, {
+      const registeredResponse = await axios.post(`${server}/api/users/register`, data, {
         headers: { 'Content-Type': 'application/json' },
       });
       console.log(registeredResponse)

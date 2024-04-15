@@ -8,6 +8,7 @@ import axios from 'axios';
 import 'react-toastify/dist/ReactToastify.css';
 import Notification from "./Notifications";
 import { useNavigate } from 'react-router-dom';
+import server from '../features/server';
 export default function Home() {
 
     const [getIP, setIP] = useState();
@@ -29,7 +30,7 @@ export default function Home() {
     const getAnnouncements = async() => {
         try {
             const team = selectedTeam;
-            const response = await axios.get(`/admin/announcements/${team}`);
+            const response = await axios.get(`${server}/admin/announcements/${team}`);
             await setAnnouncements(response.data.data);
         } catch(error) {
             console.log(error);
@@ -118,7 +119,7 @@ export default function Home() {
 
         console.log(data);
         try {
-            const response = await axios.post("/api/users/punch-out",  {
+            const response = await axios.post(`${server}/api/users/punch-out`,  {
                 latitude: latitude,
                 longitude: longitude,
                 ip: getIP,
@@ -169,7 +170,7 @@ export default function Home() {
                 navigate('/login');
             }
             else if(error.response.status == 401) {
-                toast.error('Invalid IP address')
+                toast.error('Connection with RUBI wifi not established')
             }
             else if(error.response.status == 403) {
                 toast.error('Location outside allowed range')
@@ -183,7 +184,7 @@ export default function Home() {
 
     const checkIn = async() => {
         try {
-            const response = await axios.post("/api/users/punch-in",  {
+            const response = await axios.post(`${server}/api/users/punch-in`,  {
                 latitude: latitude,
                 longitude: longitude,
                 ip: getIP,
@@ -223,7 +224,7 @@ export default function Home() {
                 navigate('/login');
             }
             else if(error.response.status == 401) {
-                toast.error('Invalid IP address')
+                toast.error('Connection with RUBI wifi not established')
             }
             else if(error.response.status == 403) {
                 toast.error('Location outside allowed range')
@@ -319,7 +320,7 @@ export default function Home() {
       </Dialog>
     </Transition.Root>
 
-    <div className="flex flex-col bg-amber-50 w-[350px] h-[400px] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-3xl hover:drop-shadow-2xl font-mono outline outline-2 outline-amber-50 hover:outline-offset-8 transition-all duration-300">
+    <div className="flex flex-col bg-amber-50 w-[350px] h-[400px] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-3xl hover:drop-shadow-2xl font-mono outline outline-2 outline-amber-50 outline-offset-8 md:outline-offset-0 hover:outline-offset-8 transition-all duration-300">
     <div className="flex flex-col flex-wrap justify-center">
         <h1 className="text-3xl mt-20 mb-10 px-5 font-bold font-mono self-center">
             {user.name}
