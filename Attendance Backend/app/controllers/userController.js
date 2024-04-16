@@ -20,7 +20,7 @@ exports.registerUser = async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
-      email: email,
+      email: email.toLowerCase(),
       password: hashedPassword,
       deviceId: crypto.randomBytes(16).toString('hex'),
       name: name,
@@ -164,8 +164,8 @@ exports.punchOut = async (req, res) => {
     const totalWorkingHours = `${hours}h ${minutes}m ${seconds}s`;
     user.attendance[attendanceIndex].punchOut = punchOutTime;
     user.attendance[attendanceIndex].totalWorkingHours = totalWorkingHours;
-    // user.attendance[attendanceIndex].presentStatus = hours > 6; //Set the Present or Absent Status
-    user.attendance[attendanceIndex].presentStatus = true;
+    user.attendance[attendanceIndex].presentStatus = hours > 6; //Set the Present or Absent Status
+    // user.attendance[attendanceIndex].presentStatus = true;
 
     await user.save();
 
