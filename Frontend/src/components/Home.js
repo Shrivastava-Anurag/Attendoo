@@ -42,7 +42,7 @@ export default function Home() {
     const verifyToken = async() => {
         try {
             const response = await axios.post(
-                '/api/users/verify-token',
+                `${server}/api/users/verify-token`,
                 {}, // Empty object or request data if needed
                 {
                   headers: {

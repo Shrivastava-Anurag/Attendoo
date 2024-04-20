@@ -48,6 +48,7 @@ function DynamicTable({ data }) {
             {
               item.attendance.length > flag ? 
                 Array.from({ length: item.attendance[item.attendance.length-1].day }).map((_, i) => {
+                  
                   return (
                   <td
                     key={i}
@@ -58,10 +59,14 @@ function DynamicTable({ data }) {
                   {/* {item.attendance[flag].day === i + 1 && item.attendance[flag].presentStatus && flag++ console.log(flag)} */}
                     {item.attendance[flag].day === i + 1 ? 
                       ( 
-                        item.attendance[flag].presentStatus ? '✔️' : '') :
+                        item.attendance[flag].presentStatus ? '✔️✔️' : (item.attendance[flag].halfDayStatus ? '✔️' : ' ')
+                        
+                        
+                      ) :
                       ''}
+                      
 
-                      {item.attendance[flag].day === i + 1 && item.attendance[flag].presentStatus && (() => { flag++; })()}
+                      {item.attendance[flag].day === i + 1 && (() => { flag++; })()}
 
 
                       

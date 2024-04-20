@@ -43,24 +43,96 @@ exports.createUser = async (req, res) => {
 
 
 exports.getAllUsers = async (req, res) => {
-    try {
-        const users = await User.find();
-        res.status(200).json({ success: true, data: users });
-    } catch (error) {
-        console.error('Error fetching users:', error);
-        res.status(500).json({ success: false, message: 'Failed to fetch users', error: error.message });
-    }
+  try {
+    const team = req.params.team;// 'present' or 'absent'
+    
+    
+    // Construct the query based on team name and present/absent status
+    const query = {
+      team : (team === 'all') ? {$exists: true} : team,
+  };
+    // Fetch users based on the constructed query
+    const users = await User.find(query);
+    console.log(users)
+    
+    res.status(200).json({ success: true, data: users });
+} catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch users', error: error.message });
+}
 };
 
 exports.getUsersByTeam = async (req, res) => {
-    try {
-        const team = req.params.team;
-        const users = await User.find({ team: team });
-        res.status(200).json({ success: true, data: users });
-    } catch (error) {
-        console.error('Error fetching users:', error);
-        res.status(500).json({ success: false, message: 'Failed to fetch users', error: error.message });
-    }
+  try {
+      const team = req.params.team;
+      const presentStatus = req.query.present === 'present' ? true : false ;// 'present' or 'absent'
+      console.log("query is" + presentStatus)
+      
+      // Get today's date in the format 'YYYY-MM-DD'
+      const today = new Date();
+      const Day = today.getDate();
+      
+      // Construct the query based on team name and present/absent status
+      let query;
+
+      if(!presentStatus) {
+        query = {
+          team: (team === 'all') ? { $exists: true } : team,
+          $or: [
+            // Include users with an empty attendance array
+            { attendance: [] },
+            // Include users whose attendance array does not match the specified date and presentStatus
+            {
+              $and: [
+                { attendance: { $exists: true } }, // Ensure attendance array exists
+                {
+                  attendance: {
+                    $not: {
+                      $elemMatch: {
+                        day: Day,
+                        presentStatus: presentStatus
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        };
+        
+      }
+      else {
+      query = {
+        team : (team === 'all') ? {$exists: true} : team,
+        $or: [
+          (presentStatus === false) ? { attendance: [] } : {attendance: {
+            $exists: false // Used this to stop using this conditional query from executing. IDK it's main purpose but change only if you know what youre doing
+              }}, 
+              // {
+              //   attendance: []
+              // },
+                { 
+                    attendance: { 
+                        $elemMatch: {
+                            day: Day,
+                            presentStatus: presentStatus
+                        } 
+                    } 
+                }
+            ]
+    };
+      }
+
+
+      // Fetch users based on the constructed query
+      const users = await User.find(query);
+      console.log(users)
+      
+      res.status(200).json({ success: true, data: users });
+  } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ success: false, message: 'Failed to fetch users', error: error.message });
+  }
 };
 
 // Controller function to retrieve details of a specific user by ID
@@ -230,7 +302,8 @@ exports.getAllTeams = async (req, res) => {
   
     try {
       // Find the user by email
-      const admin = await Admin.findOne({ email });
+      const newEmail = email.trim().toLowerCase();
+      const admin = await Admin.findOne({ email: newEmail });
       if (!admin) {
         return res.status(404).json({ status: "error", message: 'User not found', data: null });
       }

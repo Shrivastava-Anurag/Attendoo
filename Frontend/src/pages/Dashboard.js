@@ -27,11 +27,16 @@ export default function Dashboard() {
   const [teams, setTeams] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [presentType, setPresentType] = useState('all'); // Default to student
 
   const dispatch = useDispatch();
 
   const togglePopup = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handlePresentTypeChange = (event) => {
+    setPresentType(event.target.value);
   };
 
   const handleSend = async(data) => {
@@ -55,9 +60,15 @@ export default function Dashboard() {
 
   const fetchStudents = async() => {
     try {
-      const team = selectedTeam == 'all' ? '' : selectedTeam;
-      const response = await axios.get(`${server}/admin/users/${team}`)
-        return response.data.data;
+      const team = selectedTeam;
+      let response;
+      if(presentType === 'all') {
+        response = await axios.get(`${server}/admin/teams/${team}?present=${presentType}`)
+      }
+      else {
+        response = await axios.get(`${server}/admin/users/${team}?present=${presentType}`)
+      }
+      return response.data.data;
     }
     catch(error){
       console.log(error)
@@ -95,6 +106,7 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
+    setIsLoading(true);
     const fetchData = async () => {
       const studentsData = await fetchStudents();
       const teamData = await fetchTeams();
@@ -105,7 +117,7 @@ export default function Dashboard() {
     };
   
     fetchData();
-  }, [selectedTeam]);
+  }, [selectedTeam, presentType]);
 
   const columns = [
     {
@@ -260,6 +272,38 @@ if(students){
         <header className="bg-white shadow">
           <div className=" mx-10 py-10 max-w-7xl ">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900">Attendance</h1>
+            <div className="flex items-center justify-center mb-4 text-zinc-900">
+              <label className="mr-10">
+                <input
+                  type="radio"
+                  value="all"
+                  checked={presentType === 'all'}
+                  onChange={handlePresentTypeChange}
+                  className="mr-1"
+                />
+                All
+              </label>
+              <label className='mr-10'>
+                <input
+                  type="radio"
+                  value="present"
+                  checked={presentType === 'present'}
+                  onChange={handlePresentTypeChange}
+                  className="mr-1"
+                />
+                Present
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  value="absent"
+                  checked={presentType === 'absent'}
+                  onChange={handlePresentTypeChange}
+                  className="mr-1"
+                />
+                Absent
+              </label>
+            </div>
           </div>
         </header>
         <main className='bg-white '>

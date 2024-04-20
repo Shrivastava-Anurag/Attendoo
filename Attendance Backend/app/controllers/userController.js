@@ -51,7 +51,8 @@ exports.loginUser = async (req, res) => {
 
   try {
     // Find the user by email
-    const user = await User.findOne({ email });
+    const newEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: newEmail });
     if (!user) {
       return res.status(404).json({ status: "error", message: 'User not found', data: null });
     }
@@ -164,6 +165,7 @@ exports.punchOut = async (req, res) => {
     const totalWorkingHours = `${hours}h ${minutes}m ${seconds}s`;
     user.attendance[attendanceIndex].punchOut = punchOutTime;
     user.attendance[attendanceIndex].totalWorkingHours = totalWorkingHours;
+    user.attendance[attendanceIndex].halfDayStatus = hours > 3; //Set the half day status
     user.attendance[attendanceIndex].presentStatus = hours > 6; //Set the Present or Absent Status
     // user.attendance[attendanceIndex].presentStatus = true;
 
@@ -226,7 +228,7 @@ exports.punchIn = async (req, res) => {
     // Record punch-in time
     const punchInTime = new Date();
     const punchInDay = punchInTime.getDate();
-    user.attendance.push({ date: punchInTime, punchIn: punchInTime, day: punchInDay, presentStatus: true }); // Store the punchIn time as Date object
+    user.attendance.push({ date: punchInTime, punchIn: punchInTime, day: punchInDay, halfDayStatus: true }); // Store the punchIn time as Date object
     await user.save();
 
     res.status(200).json({ status: 'success', message: 'Punch-in successful', data: { punchInTime: punchInTime.toLocaleTimeString() } });

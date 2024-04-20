@@ -4,7 +4,7 @@ const adminController = require('../controllers/adminController');
 
 // Route for adding a new user
 router.post('/create', adminController.createUser);
-router.get('/users', adminController.getAllUsers);
+router.get('/teams/:team', adminController.getAllUsers);
 router.get('/users/:team', adminController.getUsersByTeam);
 router.get('/users/:userId', adminController.getUserById);
 // Route for updating user information

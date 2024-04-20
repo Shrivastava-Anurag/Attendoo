@@ -19,6 +19,7 @@ const userSchema = new mongoose.Schema({
     punchOut: { type: Date }, // Store punch-out timestamp
     totalWorkingHours: { type: String, default: 0 }, // Store total working hours
     presentStatus: { type: Boolean, default: false }, //
+    halfDayStatus: { type: Boolean, default: false }, //
   }]
 });
 

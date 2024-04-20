@@ -12,7 +12,6 @@ import {useSelector} from 'react-redux'
 function App() {
   const isAuth = Boolean(useSelector((state) => state.token));
   const isAdmin = Boolean(useSelector((state) => state.user && state.user.role === 'admin'));
-  console.log(isAdmin)
   // const isAuth = true;
   return (
     <>
@@ -20,8 +19,9 @@ function App() {
     <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={isAdmin ? <RegisterPage /> : <Navigate to="/" />} />
-            <Route path="/" element={ isAuth ? <HomePage /> : <Navigate to="/login" />} />
-            <Route path="/dashboard" element={isAdmin ? <Dashboard /> : <Navigate to="/" />} />
+            {isAdmin ? (<Route path="/" element={ <Dashboard /> } />) : (<Route path="/" element={ isAuth ? <HomePage /> : <Navigate to="/login" />} />)}
+
+            {/* <Route path="/dashboard" element={isAdmin ? <Dashboard /> : <Navigate to="/" />} /> */}
             <Route path="/admin-register" element={isAdmin ? <AdminRegisterPage /> : <Navigate to="/" />} />
           </Routes>
     </BrowserRouter>

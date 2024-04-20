@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { setLogin } from '../features/userSlice';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/solid';
 import axios from 'axios';
 import server from '../features/server';
 
@@ -15,9 +16,14 @@ export default function Login() {
 
   const[error, setError] = useState("");
   const [userType, setUserType] = useState('student'); // Default to student
+  const [showPassword, setShowPassword] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   const handleUserTypeChange = (event) => {
     setUserType(event.target.value);
@@ -57,7 +63,7 @@ export default function Login() {
               user: loggedIn,
             })
           );
-          navigate('/dashboard');
+          navigate('/');
         }
       }
 
@@ -66,7 +72,7 @@ export default function Login() {
       if (err.response.status == 401) {
         setError("Invalid Password")
       }
-      if (err.response.status == 404) {
+      else if (err.response.status == 404) {
         setError("Email not found")
       }
     }
@@ -133,20 +139,26 @@ export default function Login() {
                 <div className="text-sm">
                 </div>
               </div>
-              <div className="mt-2">
+              <div className="mt-2 relative">
                 <input
                   id="password"
                   {...register('password', {
                     required: 'password is required',
                   })}
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-amber-50 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-amber-500 sm:text-sm sm:leading-6"
                 />
+                  <button
+                    type="button"
+                    onClick={togglePasswordVisibility}
+                    className="absolute inset-y-0 right-0 flex items-center pr-2 text-zinc-900"
+                  >
+                    {showPassword ? <EyeSlashIcon className="h-6 w-6" /> : <EyeIcon className="h-6 w-6" />}
+                  </button>
+                </div>
                   {errors.password && (
                   <p className="text-red-500">{errors.password.message}</p>
                 )}
-
-              </div>
             </div>
 
             {/* User type options */}
