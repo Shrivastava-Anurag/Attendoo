@@ -90,7 +90,8 @@ exports.getUsersByTeam = async (req, res) => {
                     $not: {
                       $elemMatch: {
                         day: Day,
-                        presentStatus: presentStatus
+                        presentStatus: presentStatus,
+                        halfDayStatus: false,
                       }
                     }
                   }
@@ -115,7 +116,8 @@ exports.getUsersByTeam = async (req, res) => {
                     attendance: { 
                         $elemMatch: {
                             day: Day,
-                            presentStatus: presentStatus
+                            presentStatus: presentStatus,
+                            halfDayStatus: true,
                         } 
                     } 
                 }
