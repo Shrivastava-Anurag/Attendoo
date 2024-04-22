@@ -70,7 +70,7 @@ exports.getUsersByTeam = async (req, res) => {
       
       // Get today's date in the format 'YYYY-MM-DD'
       const today = new Date();
-      const Day = today.getDate();
+      const Day = 20
       
       // Construct the query based on team name and present/absent status
       let query;
@@ -90,8 +90,9 @@ exports.getUsersByTeam = async (req, res) => {
                     $not: {
                       $elemMatch: {
                         day: Day,
-                        presentStatus: presentStatus,
-                        halfDayStatus: false,
+                        presentStatus: false,
+                        halfDayStatus: true,
+                        
                       }
                     }
                   }
@@ -116,11 +117,18 @@ exports.getUsersByTeam = async (req, res) => {
                     attendance: { 
                         $elemMatch: {
                             day: Day,
-                            presentStatus: presentStatus,
-                            halfDayStatus: true,
+                            presentStatus: true,
                         } 
                     } 
-                }
+                },
+                { 
+                  attendance: { 
+                      $elemMatch: {
+                          day: Day,
+                          halfDayStatus: true,
+                      } 
+                  } 
+              }
             ]
     };
       }
@@ -370,7 +378,7 @@ exports.getAllTeams = async (req, res) => {
           //           (att.presentStatus ? 'True' : '') : ''
           // }
           user.attendance.forEach(att => {
-            row[att.day] = att.presentStatus ? 'Present' : ''
+            row[att.day] = att.presentStatus ? 'Present' : (att.halfDayStatus ? 'Half-Day' : '')
           });
         }
 

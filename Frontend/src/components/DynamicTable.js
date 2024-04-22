@@ -54,12 +54,13 @@ function DynamicTable({ data }) {
                     key={i}
                     className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
                   >
+                  
                   {/* {console.log(i + " " + flag)} */}
                   {/* {item.attendance[flag].day === i + 1 && item.attendance[flag].presentStatus && console.log(flag)} */}
                   {/* {item.attendance[flag].day === i + 1 && item.attendance[flag].presentStatus && flag++ console.log(flag)} */}
                     {item.attendance[flag].day === i + 1 ? 
                       ( 
-                        item.attendance[flag].presentStatus ? '✔️✔️' : (item.attendance[flag].halfDayStatus ? '✔️' : ' ')
+                        item.attendance[flag].presentStatus ? '✔️✔️' : (item.attendance[flag].halfDayStatus ? '✔️' : '')
                         
                         
                       ) :
