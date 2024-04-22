@@ -70,7 +70,7 @@ exports.getUsersByTeam = async (req, res) => {
       
       // Get today's date in the format 'YYYY-MM-DD'
       const today = new Date();
-      const Day = 20
+      const Day = today.getDate();
       
       // Construct the query based on team name and present/absent status
       let query;
