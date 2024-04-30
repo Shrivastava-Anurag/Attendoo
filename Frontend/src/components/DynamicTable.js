@@ -1,15 +1,83 @@
 import { React, useState, useEffect } from "react";
+import UserInfo from "./UserInfo";
+import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import { Bounce } from 'react-toastify'; // Import the Bounce transition
+import server from '../features/server';
 
 function DynamicTable({ data }) {
   // const [flag, setFlag] = useState(0);
-  console.log(data)
+  const [selectedUser, setSelectedUser] = useState(null);
 
-  // useEffect(() => {
-  //   setFlag(0); // Reset flag when data changes
-  // }, [data]);
+  const handleUserClick = (user) => {
+    setSelectedUser(user);
+  };
+
+  const handleClosePopup = () => {
+    setSelectedUser(null);
+  };
+
+  const handleDeleteUser = async (userId) => {
+    try {
+      console.log(userId)
+      const response = await axios.delete(`${server}/admin/users/${userId}`)
+      if(response.status == 200) {
+        toast.success('Successfully Deleted', {
+            position: "top-center",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+            transition: Bounce,
+            });
+            setSelectedUser(null);
+            window.location.reload();
+    }
+      
+    }
+    catch(error){
+      console.log(error)
+    }
+  };
+
+  const handleUpdateUser = async (updatedUser) => {
+    try {
+      const userId = updatedUser._id
+      const response = await axios.put(`${server}/admin/users/${userId}`, updatedUser, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if(response.status == 200) {
+        toast.success('Successfully Updated', {
+            position: "top-center",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+            transition: Bounce,
+            });
+            setSelectedUser(null);
+            window.location.reload();
+    }
+      
+    }
+    catch(error){
+      console.log(error)
+    }
+  };
+
+
+  useEffect(() => {
+  }, [data]);
 
   return (
 <div className="overflow-x-auto min-h-[500px]">
+      <ToastContainer />
       <table className="min-w-full divide-y divide-gray-200 ">
         <thead className="bg-gray-50">
           <tr>
@@ -43,7 +111,7 @@ function DynamicTable({ data }) {
           let flag = 0;
           return (
           <tr key={item.id}>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.name}</td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 cursor-pointer" onClick={() => handleUserClick(item)}>{item.name}</td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.team}</td>
             {
               item.attendance.length > flag ? 
@@ -58,13 +126,17 @@ function DynamicTable({ data }) {
                   {/* {console.log(i + " " + flag)} */}
                   {/* {item.attendance[flag].day === i + 1 && item.attendance[flag].presentStatus && console.log(flag)} */}
                   {/* {item.attendance[flag].day === i + 1 && item.attendance[flag].presentStatus && flag++ console.log(flag)} */}
-                    {item.attendance[flag].day === i + 1 ? 
-                      ( 
-                        item.attendance[flag].presentStatus ? '✔️✔️' : (item.attendance[flag].halfDayStatus ? '✔️' : '')
-                        
-                        
-                      ) :
-                      ''}
+                  {
+                    item.attendance[flag].day === i + 1 ? 
+                    ( 
+                      item.attendance[flag].status === 'present' ? '✔️✔️' :
+                      item.attendance[flag].status === 'half-day' ? '✔️' :
+                      item.attendance[flag].status === 'leave' ? 'L' :
+                      item.attendance[flag].status === 'absent' ? '' :
+                      ''
+                    ) :
+                    ''
+                  }
                       
 
                       {item.attendance[flag].day === i + 1 && (() => { flag++; })()}
@@ -83,6 +155,14 @@ function DynamicTable({ data }) {
         })}
         </tbody>
       </table>
+      {selectedUser && (
+        <UserInfo
+          user={selectedUser}
+          onClose={handleClosePopup}
+          onDelete={handleDeleteUser}
+          onUpdate={handleUpdateUser}
+        />
+      )}
     </div>
   );
 }

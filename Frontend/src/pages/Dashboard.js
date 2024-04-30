@@ -1,15 +1,17 @@
 import { Fragment, useEffect, useState } from 'react'
-import { Disclosure, Menu, Transition } from '@headlessui/react'
+import { Disclosure, Menu, Transition, Listbox } from '@headlessui/react'
 import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import DynamicTable from '../components/DynamicTable'
 import DataTable from 'react-data-table-component';
-import { useDispatch, } from 'react-redux'
+import { useDispatch, } from 'react-redux';
+import { useNavigate } from "react-router-dom";
 import { setLogout } from '../features/userSlice';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { setTeamNames } from '../features/userSlice';
 import MessageAdmin from '../components/NotificationAdmin';
 import server from '../features/server';
+import RequestPanel from '../components/RequestPanel';
 
 const navigation = [
   { name: 'Dashboard', href: '#', current: true },
@@ -19,6 +21,20 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
 
+const months = [
+  {id: 1, name: 'Janurary'},
+  {id: 2, name: 'February'},
+  {id: 3, name: 'March'},
+  {id: 4, name: 'April'},
+  {id: 5, name: 'May'},
+  {id: 6, name: 'June'},
+  {id: 7, name: 'July'},
+  {id: 8, name: 'August'},
+  {id: 9, name: 'September'},
+  {id: 10, name: 'October'},
+  {id: 11, name: 'November'},
+  {id: 12, name: 'December'}
+];
 
 
 export default function Dashboard() {
@@ -28,16 +44,33 @@ export default function Dashboard() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [presentType, setPresentType] = useState('all'); // Default to student
+  const [open, setOpen] = useState(false)
+  const today = new Date();
+  const currentMonth = today.getMonth() + 1;
+  const [selectedMonth, setselectedMonth] = useState(currentMonth)
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const togglePopup = () => {
     setIsOpen(!isOpen);
   };
 
+
+  const togglePanel = () => {
+    setOpen(!open);
+  };
+
   const handlePresentTypeChange = (event) => {
     setPresentType(event.target.value);
   };
+
+  const signOut = () => {
+    dispatch(
+      setLogout()
+    )
+    navigate('/login');
+  }
 
   const handleSend = async(data) => {
     try {
@@ -58,15 +91,17 @@ export default function Dashboard() {
     }
   };
 
+
   const fetchStudents = async() => {
     try {
       const team = selectedTeam;
       let response;
+      console.log(typeof selectedMonth)
       if(presentType === 'all') {
-        response = await axios.get(`${server}/admin/teams/${team}?present=${presentType}`)
+        response = await axios.get(`${server}/admin/users/${team}/${selectedMonth}/2024/?present=${presentType}`)
       }
       else {
-        response = await axios.get(`${server}/admin/users/${team}?present=${presentType}`)
+        response = await axios.get(`${server}/admin/teams/${team}/${selectedMonth}/2024/?present=${presentType}`)
       }
       return response.data.data;
     }
@@ -106,18 +141,17 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
-    setIsLoading(true);
     const fetchData = async () => {
-      const studentsData = await fetchStudents();
-      const teamData = await fetchTeams();
+      setIsLoading(true);
+      const [studentsData, teamData] = await Promise.all([fetchStudents(), fetchTeams()]);
       setTeams(teamData);
       dispatch(setTeamNames(teamData));
-      setStudents(studentsData); // Set the state with the fetched data
+      setStudents(studentsData);
       setIsLoading(false);
     };
-  
+
     fetchData();
-  }, [selectedTeam, presentType]);
+  }, [selectedTeam, presentType, selectedMonth]);
 
   const columns = [
     {
@@ -190,7 +224,7 @@ if(students){
                 onChange={(event) => {
                   setteam(event.target.value);
                 }}
-                className="block appearance-none bg-amber-50 border border-gray-300 hover:border-gray-400 px-4 py-1 pr-8 rounded shadow leading-tight focus:outline-none focus:ring focus:ring-gray-700"
+                className="block appearance-none w-[150px] bg-amber-50 border border-gray-300 hover:border-gray-400 px-4 py-1 pr-8 rounded shadow leading-tight focus:outline-none focus:ring focus:ring-gray-700"
               >
                 <option value="all">All</option>
                 {
@@ -205,6 +239,9 @@ if(students){
               </button>
               <button className="bg-amber-50 rounded ml-5 p-1 hover:bg-amber-100">
                 <Link to="/admin-register">Add Admin</Link>
+              </button>
+              <button onClick={() => signOut()} className="bg-red-600  rounded ml-5 p-1 hover:bg-red-500 px-2 ">
+                Sign Out
               </button>
                       </div>
 
@@ -268,6 +305,9 @@ if(students){
             </>
           )}
         </Disclosure>
+        <div>
+          <RequestPanel/>
+        </div>
 
         <header className="bg-white shadow">
           <div className=" mx-10 py-10 max-w-7xl ">
@@ -303,6 +343,20 @@ if(students){
                 />
                 Absent
               </label>
+              <select
+                value={selectedMonth}
+                onChange={(event) => {
+                  setselectedMonth(parseInt(event.target.value));
+                }}
+                className="block text-center mb-2 sef appearance-none bg-amber-50 border border-gray-300 hover:border-gray-400 ml-5 px-4 py-1 pr-8 rounded shadow leading-tight focus:outline-none focus:ring focus:ring-gray-700"
+              >
+                {
+                  months.map((month, index) => (
+                    <option key={month.id} value={month.id}>{month.name}</option>
+                  ))
+                }
+              </select> 
+
             </div>
           </div>
         </header>

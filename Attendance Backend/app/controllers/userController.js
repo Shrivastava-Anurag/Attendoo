@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const User = require('../models/userModel');
 const Team = require('../models/teamsModel');
+const Request = require('../models/requestModel');
 const config = require('../../config/config');
 
 exports.registerUser = async (req, res) => {
@@ -76,7 +77,7 @@ exports.loginUser = async (req, res) => {
     // Generate JWT token
     const token = jwt.sign({ userId: user._id }, process.env.SECRET_KEY, { expiresIn: '8h' });
 
-    res.status(200).json({ status: "success", message: "Login successful", data: { token, name: user.name, email: user.email, team: user.team, erp: user.erp, role:user.role ,deviceId: user.deviceId } });
+    res.status(200).json({ status: "success", message: "Login successful", data: { token, name: user.name, email: user.email, team: user.team, erp: user.erp, role:user.role ,deviceId: user.deviceId, userId: user._id } });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ status: "error", message: 'Internal server error', data: null });
@@ -165,9 +166,7 @@ exports.punchOut = async (req, res) => {
     const totalWorkingHours = `${hours}h ${minutes}m ${seconds}s`;
     user.attendance[attendanceIndex].punchOut = punchOutTime;
     user.attendance[attendanceIndex].totalWorkingHours = totalWorkingHours;
-    // user.attendance[attendanceIndex].halfDayStatus = hours > 3; //Set the half day status
-    user.attendance[attendanceIndex].presentStatus = hours > 5; //Set the Present or Absent Status
-    // user.attendance[attendanceIndex].presentStatus = true;
+    user.attendance[attendanceIndex].status = hours > 5 ? 'present' : 'absent'; //Set the Present or Absent Status
 
     await user.save();
 
@@ -228,7 +227,7 @@ exports.punchIn = async (req, res) => {
     // Record punch-in time
     const punchInTime = new Date();
     const punchInDay = punchInTime.getDate();
-    user.attendance.push({ date: punchInTime, punchIn: punchInTime, day: punchInDay, presentStatus: true }); // Store the punchIn time as Date object
+    user.attendance.push({ date: punchInTime, punchIn: punchInTime, day: punchInDay, status: 'present' }); // Store the punchIn time as Date object
     await user.save();
 
     res.status(200).json({ status: 'success', message: 'Punch-in successful', data: { punchInTime: punchInTime.toLocaleTimeString() } });
@@ -238,6 +237,64 @@ exports.punchIn = async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Internal server error', data: null });
   }
 };
+
+exports.sendRequest = async(req, res) => {
+  try{
+      const {name, erp, content, title, team, from, to, user } = req.body;
+      console.log(user)
+      const today = new Date();
+
+      const requestData = new Request({content: content, team: team, date: today, name: name, erp: erp, title: title, from: from, to: to, user: user});
+      await requestData.save()
+      .then((savedData) => {
+          console.log('User saved successfully:', savedData);
+          
+          res.status(200).json({ status: "success", message: "user saved successfully", data: savedData });
+        })
+        .catch((error) => {
+          console.error('Error saving user:', error);
+          res.status(404).json({ status: "error", message: "error saving user", data: savedData });
+        });  
+
+
+  }
+  catch(err) {
+      console.log(err)
+  }
+}
+
+exports.getRequest = async(req, res) => {
+  try{
+      const team = req.params.team;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const teams = ['All', team] //to fetch the data of specific team and public announcement
+
+      const requests = await Request.find({
+          team: teams,
+        });
+        const cloneRequests = JSON.parse(JSON.stringify(requests));
+
+        cloneRequests.forEach((request, index) => {
+          const hours = requests[index].date.getHours();
+          const minutes = requests[index].date.getMinutes();
+          const amPM = hours >= 12 ? 'PM' : 'AM';
+          const formattedHours = hours % 12 || 12; 
+          request.date = requests[index].date.toLocaleDateString('en-GB');
+          request.from = requests[index].from.toLocaleDateString('en-GB');
+          request.to = requests[index].to.toLocaleDateString('en-GB');
+          request['time'] = `${formattedHours}:${minutes.toString().padStart(2, '0')} ${amPM}`;
+        });
+
+      res.status(200).json({ success: true, data: cloneRequests });
+  } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ success: false, message: 'Failed to fetch announcements', error: error.message });
+  }
+}
+
+
 
 const haversineDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371e3; // Earth radius in meters

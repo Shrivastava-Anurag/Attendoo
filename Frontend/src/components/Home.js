@@ -9,6 +9,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import Notification from "./Notifications";
 import { useNavigate } from 'react-router-dom';
 import server from '../features/server';
+import RequestBox from "./RequestBox";
+import RequestUser from "./RequestUser";
 export default function Home() {
 
     const [getIP, setIP] = useState();
@@ -21,16 +23,54 @@ export default function Home() {
     const user = useSelector(state => state.user);
     const selectedTeam = useSelector(state => state.user.team);
     const [open, setOpen] = useState(false)
+    const [isOpen, setIsOpen] = useState(false);
+    const [requestData, setRequestData] = useState('');
     const navigate = useNavigate();
+    const [requests, setRequests] = useState('')
 
     const togglePanel = () => {
+      getRequests()
       setOpen(!open);
     };
 
+    const togglePopup = () => {
+        setIsOpen(!isOpen);
+    };
+
+    const handleSend = async(data) => {
+        try {
+          const response = await axios.post(`${server}/api/users/request/`, data, {
+            headers: { 'Content-Type': 'application/json' },
+          });
+          console.log(response)
+          if (response.status == 200) {
+            const responseData = response.data.data;
+            console.log(responseData)
+          }
+          else {
+            alert("Something went wrong")
+          }
+        }
+        catch (err) {
+          console.log(err);
+        }
+      };
+
+      const getRequests = async() => {
+        try {
+            const response = await axios.get(`${server}/api/users/requests/${selectedTeam}`);
+            setRequests(response.data.data);
+            console.log(response.data.data)
+        } catch(error) {
+            console.log(error);
+            // Handle the error or rethrow it if necessary
+            throw error;
+        }
+    }
+
     const getAnnouncements = async() => {
         try {
-            const team = selectedTeam;
-            const response = await axios.get(`${server}/admin/announcements/${team}`);
+            const response = await axios.get(`${server}/admin/announcements/${selectedTeam}`);
             await setAnnouncements(response.data.data);
         } catch(error) {
             console.log(error);
@@ -240,6 +280,8 @@ export default function Home() {
     return(
         <>
         <ToastContainer />
+        <button className="bg-amber-50 rounded fixed right-20 top-6 hover:bg-amber-100 p-1 px-2" onClick={togglePopup}>Send Request</button>
+
         <button className="text-white fixed right-7 top-5" onClick={togglePanel}>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10">
         <path fillRule="evenodd" d="M12 2.25c-2.429 0-4.817.178-7.152.521C2.87 3.061 1.5 4.795 1.5 6.741v6.018c0 1.946 1.37 3.68 3.348 3.97.877.129 1.761.234 2.652.316V21a.75.75 0 0 0 1.28.53l4.184-4.183a.39.39 0 0 1 .266-.112c2.006-.05 3.982-.22 5.922-.506 1.978-.29 3.348-2.023 3.348-3.97V6.741c0-1.947-1.37-3.68-3.348-3.97A49.145 49.145 0 0 0 12 2.25ZM8.25 8.625a1.125 1.125 0 1 0 0 2.25 1.125 1.125 0 0 0 0-2.25Zm2.625 1.125a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Zm4.875-1.125a1.125 1.125 0 1 0 0 2.25 1.125 1.125 0 0 0 0-2.25Z" clipRule="evenodd" />
@@ -310,6 +352,14 @@ export default function Home() {
                             </div>
                         ))
                     }
+                    {
+                      requests && 
+                        requests.map((request, index) => (
+                            <div key={index} className="">
+                            {<RequestUser content={request.content} time={request.time} title={request.title} erp={request.erp} name={request.name} date={request.date} status={request.status} from={request.from} to={request.to} requestId={request._id}/>}
+                            </div>
+                        ))
+                    }
                     </div>
                   </div>
                 </Dialog.Panel>
@@ -348,7 +398,7 @@ export default function Home() {
         </button>
     </div>
 </div>
-
+        <RequestBox isOpen={isOpen} onClose={togglePopup} onSend={handleSend} user={user} />
         </>
     )
 }

@@ -5,9 +5,13 @@ const UserDetails = require('../models/userDetails');
 const Announcement = require('../models/announcementModel');
 const Team = require('../models/teamsModel');
 const Admin = require('../models/adminModel')
+const Request = require('../models/requestModel');
 const ExcelJS = require('exceljs');
 const fs = require('fs');
 const moment = require('moment');
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const client = require('twilio')(accountSid, authToken);
 
 exports.createUser = async (req, res) => {
     try {
@@ -44,16 +48,53 @@ exports.createUser = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const team = req.params.team;// 'present' or 'absent'
+    const { team, month, year } = req.params;
     
-    
+    // Get the current month and year
+    const targetMonth = parseInt(month, 10);
+    const targetYear = parseInt(year, 10);
+
+  // const currentDate = new Date();
+  // const currentMonth = currentDate.getMonth() + 1; // Months are zero-based (0 = January)
+  // const currentYear = currentDate.getFullYear();
+
     // Construct the query based on team name and present/absent status
     const query = {
-      team : (team === 'all') ? {$exists: true} : team,
-  };
+      team: (team === 'all') ? {$exists: true} : team,
+    };
     // Fetch users based on the constructed query
-    const users = await User.find(query);
-    console.log(users)
+    const users = await User.aggregate([
+      { $match: query }, // Match users based on the constructed query
+      {
+        $project: {
+          _id: 1,
+          email: 1,
+          password: 1,
+          name: 1,
+          team: 1,
+          erp: 1,
+          deviceId: 1,
+          college : 1,
+          course: 1,
+          semester: 1,
+          mobile: 1,
+          role: 1,
+          // Add other fields you want to include
+          attendance: {
+            $filter: {
+              input: '$attendance',
+              as: 'att',
+              cond: {
+                $and: [
+                  { $eq: [{ $year: '$$att.date' }, targetYear] }, // Match year equal to current year
+                  { $eq: [{ $month: '$$att.date' }, targetMonth] } // Match month equal to current month
+                ]
+              }
+            }
+          }
+        }
+      }
+    ]);
     
     res.status(200).json({ success: true, data: users });
 } catch (error) {
@@ -64,13 +105,19 @@ exports.getAllUsers = async (req, res) => {
 
 exports.getUsersByTeam = async (req, res) => {
   try {
-      const team = req.params.team;
+    const { team, month, year } = req.params;
+    
+    // Get the current month and year
+    const targetMonth = parseInt(month, 10);
+    const targetYear = parseInt(year, 10);
       const presentStatus = req.query.present === 'present' ? true : false ;// 'present' or 'absent'
-      console.log("query is" + presentStatus)
       
-      // Get today's date in the format 'YYYY-MM-DD'
-      const today = new Date();
-      const Day = today.getDate();
+      // // Get today's date in the format 'YYYY-MM-DD'
+      const currentDate = new Date();
+      // const currentMonth = currentDate.getMonth() + 1; // Months are zero-based (0 = January)
+      // const currentYear = currentDate.getFullYear();
+      const Day = currentDate.getDay();
+      // const Day = 25;
       
       // Construct the query based on team name and present/absent status
       let query;
@@ -90,9 +137,8 @@ exports.getUsersByTeam = async (req, res) => {
                     $not: {
                       $elemMatch: {
                         day: Day,
-                        presentStatus: false,
-                        halfDayStatus: true,
-                        
+                        status: { $in: ['present', 'half-day'] },
+
                       }
                     }
                   }
@@ -117,7 +163,7 @@ exports.getUsersByTeam = async (req, res) => {
                     attendance: { 
                         $elemMatch: {
                             day: Day,
-                            presentStatus: true,
+                            status: 'present',
                         } 
                     } 
                 },
@@ -125,7 +171,7 @@ exports.getUsersByTeam = async (req, res) => {
                   attendance: { 
                       $elemMatch: {
                           day: Day,
-                          halfDayStatus: true,
+                          status: 'half-day',
                       } 
                   } 
               }
@@ -135,8 +181,39 @@ exports.getUsersByTeam = async (req, res) => {
 
 
       // Fetch users based on the constructed query
-      const users = await User.find(query);
-      console.log(users)
+      const users = await User.aggregate([
+        { $match: query }, // Match users based on the constructed query
+        {
+          $project: {
+            _id: 1,
+            email: 1,
+            password: 1,
+            name: 1,
+            team: 1,
+            erp: 1,
+            deviceId: 1,
+            college : 1,
+            course: 1,
+            semester: 1,
+            mobile: 1,
+            role: 1,
+            // Add other fields you want to include
+            attendance: {
+              $filter: {
+                input: '$attendance',
+                as: 'att',
+                cond: {
+                  $and: [
+                    { $eq: [{ $year: '$$att.date' }, targetYear] }, // Match year equal to current year
+                    { $eq: [{ $month: '$$att.date' }, targetMonth] } // Match month equal to current month
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]);
+      console.log(users)  
       
       res.status(200).json({ success: true, data: users });
   } catch (error) {
@@ -180,6 +257,7 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
     try {
         const userId = req.params.userId;
+        console.log(userId)
         const deletedUser = await User.findByIdAndDelete(userId);
         if (!deletedUser) {
             return res.status(404).json({ success: false, message: 'User not found' });
@@ -241,6 +319,8 @@ exports.sendAnnouncement = async(req, res) => {
     }
 }
 
+
+
 exports.getAnnouncements = async(req, res) => {
     try{
         const team = req.params.team;
@@ -269,6 +349,75 @@ exports.getAnnouncements = async(req, res) => {
         res.status(500).json({ success: false, message: 'Failed to fetch announcements', error: error.message });
     }
 }
+
+
+exports.updateRequest = async (req, res) => {
+  try {
+    const requestData = req.body
+    const requestId = req.params.requestId;
+    const request = await Request.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+    // Extract the user ID from the request data
+    const userId = request.user;
+    const day = request.date.getDate();
+    const status = requestData.status;
+    if (status === 'approved' && request.title === 'half-day') {
+      await approveHalfDay( day, userId, accountSid, authToken, client);
+    }
+    if (status === 'approved' && request.title === 'leave') {
+      await approveLeave( request.from, request.to, userId, accountSid, authToken, client);
+    }
+
+      const updatedRequest = await Request.findByIdAndUpdate(requestId, requestData, { new: true });
+      if (!updatedRequest) {
+          return res.status(404).json({ success: false, message: 'Request not found' });
+      }
+      res.status(200).json({ success: true, message: 'Request updated successfully', data: updatedRequest });
+  } catch (error) {
+      console.error('Error updating Request:', error);
+      res.status(500).json({ success: false, message: 'Failed to update Request', error: error.message });
+  }
+};
+
+
+exports.getAllRequests = async (req, res) => {
+  try{
+      const requests = await Request.find();
+        const cloneRequests = JSON.parse(JSON.stringify(requests));
+
+        cloneRequests.forEach((request, index) => {
+          const hours = requests[index].date.getHours();
+          const minutes = requests[index].date.getMinutes();
+          const amPM = hours >= 12 ? 'PM' : 'AM';
+          const formattedHours = hours % 12 || 12; 
+          request.date = requests[index].date.toLocaleDateString('en-GB');
+          request.from = requests[index].from.toLocaleDateString('en-GB');
+          request.to = requests[index].to.toLocaleDateString('en-GB');
+          request['time'] = `${formattedHours}:${minutes.toString().padStart(2, '0')} ${amPM}`;
+        });
+
+
+      res.status(200).json({ success: true, data: cloneRequests });
+  } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ success: false, message: 'Failed to fetch announcements', error: error.message });
+  }
+};
+
+async function markUsersAbsent() {
+  try {
+    // Update documents where attendance array exists and presentStatus is true
+    const result = await User.find({ 'attendance.presentStatus': true })
+
+    console.log(`${result.nModified} users marked as absent.`);
+  } catch (error) {
+    console.error('Error marking users absent:', error);
+  }
+}
+
+
 exports.getAllTeams = async (req, res) => {
     try {
       // Fetch all teams
@@ -406,4 +555,97 @@ exports.getAllTeams = async (req, res) => {
       console.error('Error generating Excel file:', error);
       res.status(500).send('Internal server error');
     }
+  };
+
+  const approveHalfDay = async (day, userId, content) => {
+    try {
+      // Find the user by ID
+      const user = await User.findById(userId);
+      console.log(user)
+      if (!user) {
+        // Handle case where user is not found
+        console.log('User not found');
+        return;
+      }
+  
+      // Find the attendance entry for the specified day
+      const attendanceEntry = user.attendance.find(entry => entry.day === day);
+      console.log(attendanceEntry)
+      if (!attendanceEntry) {
+        const time = new Date();
+        user.attendance.push({ date: time, punchIn: time, day: day, status: 'half-day' }); // Store the punchIn time as Date object
+        await user.save();
+        return;
+      }
+  
+      // Update the presentStatus to "half-day"
+      attendanceEntry.status = 'half-day';
+  
+      // Save the updated user document
+      await user.save();
+      
+      // client.messages
+      // .create({
+      //   body: 'Half Day Approved',
+      //   from: '+13308717064',
+      //   to: '+916232955569'
+      // })
+      // .then(message => console.log(message.sid));
+  
+      console.log('User attendance updated to half-day for day', day);
+    } catch (error) {
+      // Handle any errors
+      console.error('Error updating user attendance:', error);
+    }
+  
+  }
+
+  const approveLeave = async (from, to, userId,) => {
+    try {
+        // Find the user by ID
+        const user = await User.findById(userId);
+        console.log(user)
+        if (!user) {
+          // Handle case where user is not found
+          console.log('User not found');
+          return;
+        }
+         const time = new Date();
+        let start = from;
+
+        while ( start <= to ) {
+          const day = start.getDate();
+          user.attendance.push({ date: time, punchIn: time, day: day, status: 'leave' }); // Store the punchIn time as Date object
+          start.setDate(start.getDate() + 1);
+        }
+        await user.save();
+
+        // client.messages
+        // .create({
+        //   body: 'Leave Approved',
+        //   from: '+13308717064',
+        //   to: '+916260278503'
+        // })
+        // .then(message => console.log(message.sid));
+  
+      console.log('User attendance updated to leave for day');
+
+    }
+    catch (error) {
+      console.log(error)
+      console.error('Error updating user leave')
+    }
+  }
+
+  const calculateDaysBetweenDates = (fromDate, toDate) => {
+    // Calculate the difference in milliseconds
+    const differenceInMs = toDate.getTime() - fromDate.getTime();
+  
+    // Convert milliseconds to days
+    const daysDifference = differenceInMs / (1000 * 60 * 60 * 24);
+  
+    // Round the result to get the integer number of days
+    const roundedDaysDifference = Math.round(daysDifference);
+  
+    return roundedDaysDifference;
   };

@@ -4,8 +4,8 @@ const adminController = require('../controllers/adminController');
 
 // Route for adding a new user
 router.post('/create', adminController.createUser);
-router.get('/teams/:team', adminController.getAllUsers);
-router.get('/users/:team', adminController.getUsersByTeam);
+router.get('/users/:team/:month/:year', adminController.getAllUsers);
+router.get('/teams/:team/:month/:year', adminController.getUsersByTeam);
 router.get('/users/:userId', adminController.getUserById);
 // Route for updating user information
 router.put('/users/:userId', adminController.updateUser);
@@ -18,6 +18,9 @@ router.get('/teams', adminController.getAllTeams); // Route for sending annoucem
 router.get('/download-attendance', adminController.downloadAttendance)
 router.post('/register', adminController.registerAdmin); // Route for registering Admin
 router.post('/login', adminController.loginAdmin); // Route for registering Admin
+router.get('/requests', adminController.getAllRequests);
+router.put('/request/:requestId', adminController.updateRequest);
+
 
 
 module.exports = router;
