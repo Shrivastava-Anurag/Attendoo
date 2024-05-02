@@ -1,3 +1,3 @@
-const server = "http://localhost:8080"
+const server = "https://attendance-manager-v82c.onrender.com"
 
 export default server;

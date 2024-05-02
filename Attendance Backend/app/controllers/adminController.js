@@ -9,9 +9,9 @@ const Request = require('../models/requestModel');
 const ExcelJS = require('exceljs');
 const fs = require('fs');
 const moment = require('moment');
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const client = require('twilio')(accountSid, authToken);
+// const accountSid = process.env.TWILIO_ACCOUNT_SID;
+// const authToken = process.env.TWILIO_AUTH_TOKEN;
+// const client = require('twilio')(accountSid, authToken);
 
 exports.createUser = async (req, res) => {
     try {

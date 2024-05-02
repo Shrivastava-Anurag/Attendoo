@@ -199,6 +199,11 @@ export default function Login() {
           </form>
         </div>
       </div>
+
+      <div>
+      <h2 className='absolute bottom-5 left-5 text-zinc-500'>&copy; Rungta Tech</h2>
+        <h2 className='absolute right-10 bottom-5 text-zinc-500'>Version 2.0.0</h2>
+      </div>
     </>
   );
 }
