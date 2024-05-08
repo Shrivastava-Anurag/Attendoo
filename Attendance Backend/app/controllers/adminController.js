@@ -116,7 +116,7 @@ exports.getUsersByTeam = async (req, res) => {
       const currentDate = new Date();
       // const currentMonth = currentDate.getMonth() + 1; // Months are zero-based (0 = January)
       // const currentYear = currentDate.getFullYear();
-      const Day = currentDate.getDay();
+      const Day = currentDate.getDate();
       // const Day = 25;
       
       // Construct the query based on team name and present/absent status
@@ -213,7 +213,7 @@ exports.getUsersByTeam = async (req, res) => {
           }
         }
       ]);
-      console.log(users)  
+      console.log(Day)  
       
       res.status(200).json({ success: true, data: users });
   } catch (error) {
