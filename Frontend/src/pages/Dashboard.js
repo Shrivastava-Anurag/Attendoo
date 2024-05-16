@@ -122,7 +122,7 @@ export default function Dashboard() {
 
   const downloadAttendance = async() => {
     try {
-      const response = await axios.get(`${server}/admin/download-attendance`, {
+      const response = await axios.get(`${server}/admin/download-attendance/${selectedMonth}`, {
         responseType: 'blob', // Set the responseType to 'blob' to handle binary data
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));

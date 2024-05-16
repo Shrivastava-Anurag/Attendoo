@@ -486,8 +486,49 @@ exports.getAllTeams = async (req, res) => {
 
   exports.downloadAttendance = async (req, res) => {
     try {
+      const { month } = req.params;
+    
+      // Get the current month and year
+      const targetMonth = parseInt(month, 10);
+      const targetYear = parseInt(2024, 10);
+  
       // Fetch user data with attendance from MongoDB
-      const users = await User.find().populate('attendance');
+      const query = {
+        team: {$exists: true},
+      };
+      // Fetch users based on the constructed query
+      const users = await User.aggregate([
+        { $match: query }, // Match users based on the constructed query
+        {
+          $project: {
+            _id: 1,
+            email: 1,
+            password: 1,
+            name: 1,
+            team: 1,
+            erp: 1,
+            deviceId: 1,
+            college : 1,
+            course: 1,
+            semester: 1,
+            mobile: 1,
+            role: 1,
+            // Add other fields you want to include
+            attendance: {
+              $filter: {
+                input: '$attendance',
+                as: 'att',
+                cond: {
+                  $and: [
+                    { $eq: [{ $year: '$$att.date' }, targetYear] }, // Match year equal to current year
+                    { $eq: [{ $month: '$$att.date' }, targetMonth] } // Match month equal to current month
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]);
   
       // Create a new workbook and worksheet
       const workbook = new ExcelJS.Workbook();
@@ -520,6 +561,7 @@ exports.getAllTeams = async (req, res) => {
           contact: user.mobile,
         };
         let flag = 0;
+        // const date = new Date().getDate();
 
         if (user.attendance.length > flag) {
           // for (let i = 1; i <= user.attendance[user.attendance.length - 1].day; i++) {
@@ -527,7 +569,11 @@ exports.getAllTeams = async (req, res) => {
           //           (att.presentStatus ? 'True' : '') : ''
           // }
           user.attendance.forEach(att => {
-            row[att.day] = att.presentStatus ? 'Present' : (att.halfDayStatus ? 'Half-Day' : '')
+            row[att.day] = att.status === 'present' ? 'Present' :
+            att.status === 'half-day' ? 'Half-Day' :
+            att.status === 'leave' ? 'Leave' :
+            att.status === 'absent' ? '' :
+            ''
           });
         }
 

@@ -15,7 +15,7 @@ router.get('/attendance/current-day', adminController.getUserAttendanceCurrentDa
 router.post('/announcement', adminController.sendAnnouncement); // Route for sending annoucemenets
 router.get('/announcements/:team', adminController.getAnnouncements); // Route for sending annoucemenets
 router.get('/teams', adminController.getAllTeams); // Route for sending annoucemenets
-router.get('/download-attendance', adminController.downloadAttendance)
+router.get('/download-attendance/:month', adminController.downloadAttendance)
 router.post('/register', adminController.registerAdmin); // Route for registering Admin
 router.post('/login', adminController.loginAdmin); // Route for registering Admin
 router.get('/requests', adminController.getAllRequests);
