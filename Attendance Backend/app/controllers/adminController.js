@@ -117,7 +117,7 @@ exports.getUsersByTeam = async (req, res) => {
       // const currentMonth = currentDate.getMonth() + 1; // Months are zero-based (0 = January)
       // const currentYear = currentDate.getFullYear();
       const Day = currentDate.getDate();
-      // const Day = 25;
+      // const Day = 25; //The bug here is that it's picking the past entry of user and using it for comparison. Solution is to  atch the currnent date entirely and then post.
       
       // Construct the query based on team name and present/absent status
       let query;
